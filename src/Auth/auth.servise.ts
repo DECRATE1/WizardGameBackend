@@ -1,4 +1,8 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 
 import { UserServise } from 'src/User/user.servise';
@@ -10,14 +14,40 @@ export class AuthServise {
   ) {}
 
   async signIn(username: string, password: string) {
-    const user = await this.userServise.findUserByUserName({ username });
-    if (user?.password !== password) {
-      throw new UnauthorizedException();
-    }
+    const user = await this.userServise.findUserByUserName(username);
+    if (!user) throw new BadRequestException('User does not exist');
+    if (user?.password !== password) throw new UnauthorizedException();
 
-    const payload = { username: user.username, id: user.id };
+    const tokens = this.getTokens(1, username);
+    return tokens;
+  }
+
+  async getTokens(id: number, username: string) {
+    const [accessToken, refreshToken] = await Promise.all([
+      this.jwtServise.signAsync(
+        {
+          sub: id,
+          username,
+        },
+        {
+          secret: process.env.SUPER_SECRET_KEY,
+          expiresIn: '15m',
+        },
+      ),
+      this.jwtServise.signAsync(
+        {
+          sub: id,
+          username,
+        },
+        {
+          secret: process.env.SUPER_SECRET_KEY,
+          expiresIn: '7d',
+        },
+      ),
+    ]);
     return {
-      access_token: await this.jwtServise.signAsync(payload),
+      accessToken,
+      refreshToken,
     };
   }
 }

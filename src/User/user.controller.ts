@@ -1,4 +1,4 @@
-import { Body, Controller, Post, Request } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Request } from '@nestjs/common';
 import { UserServise } from './user.servise';
 
 @Controller('user')
@@ -7,15 +7,11 @@ export class UserController {
 
   @Post('create')
   async createUser(@Body() userData: { username: string; password: string }) {
-    const userIsExist = await this.userServise.findUserByUserName({
-      username: userData.username,
-    });
+    return this.userServise.createUser(userData);
+  }
 
-    if (userIsExist) {
-      return 'user is already exist';
-    }
-
-    await this.userServise.createUser(userData);
-    return 'user created succesfully';
+  @Get('get')
+  async getUserById(@Param('id') id: number) {
+    return this.userServise.findById(id);
   }
 }
