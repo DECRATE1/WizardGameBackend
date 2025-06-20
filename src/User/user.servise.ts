@@ -12,7 +12,6 @@ export class UserServise {
   async findUserByUserName(
     userName: Prisma.UserWhereUniqueInput,
   ): Promise<User | null> {
-    console.log(userName);
     return this.prisma.user.findUnique({
       where: userName,
     });

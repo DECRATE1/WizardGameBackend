@@ -13,6 +13,7 @@ export class AuthGuard {
   async canActivate(ctx: ExecutionContext): Promise<boolean> {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     const request = ctx.switchToHttp().getRequest();
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
     const token = this.extractTokenFromHeader(request);
     if (!token) {
       throw new UnauthorizedException();
