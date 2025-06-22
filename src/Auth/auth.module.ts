@@ -8,14 +8,7 @@ import { AccessTokenStrategy } from './strategy/accessToken.strategy';
 import { RefreshTokenStrategy } from './strategy/refreshToken.straregy';
 
 @Module({
-  imports: [
-    UserModule,
-    JwtModule.register({
-      global: true,
-      secret: 'SUPER_SECRET',
-      signOptions: { expiresIn: '8h' },
-    }),
-  ],
+  imports: [UserModule, JwtModule.register({})],
   providers: [AuthServise, AccessTokenStrategy, RefreshTokenStrategy],
   controllers: [AuthController],
   exports: [AuthServise],

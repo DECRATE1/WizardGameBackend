@@ -1,11 +1,13 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 
 import { UserServise } from 'src/User/user.servise';
+import { AuthDto, CreateUserDto } from './auth.dto';
 @Injectable()
 export class AuthServise {
   constructor(
@@ -13,12 +15,34 @@ export class AuthServise {
     private jwtServise: JwtService,
   ) {}
 
-  async signIn(username: string, password: string) {
-    const user = await this.userServise.findUserByUserName(username);
+  async signIn(authData: AuthDto) {
+    const user = await this.userServise.findUserByUserName(authData.username);
     if (!user) throw new BadRequestException('User does not exist');
-    if (user?.password !== password) throw new UnauthorizedException();
+    if (user?.password !== authData.password) throw new UnauthorizedException();
 
-    const tokens = this.getTokens(1, username);
+    const tokens = this.getTokens(user.id, authData.username);
+    return tokens;
+  }
+
+  async signUp(createUserDto: CreateUserDto) {
+    const userIsExist = await this.userServise.findUserByUserName(
+      createUserDto.username,
+    );
+    if (userIsExist) throw new BadRequestException('User already exist');
+
+    const newUser = await this.userServise.createUser(createUserDto);
+    const tokens = this.getTokens(newUser.id, newUser.username);
+    return tokens;
+  }
+
+  async refreshTokens(userId: number, refreshToken: string) {
+    const user = await this.userServise.findById(userId);
+    if (!user || !user.refreshToken)
+      throw new ForbiddenException('Access Denied');
+    const refreshTokenMatches =
+      refreshToken === user.refreshToken ? true : false;
+    if (!refreshTokenMatches) throw new ForbiddenException('Access Denied');
+    const tokens = await this.getTokens(user.id, user.username);
     return tokens;
   }
 
