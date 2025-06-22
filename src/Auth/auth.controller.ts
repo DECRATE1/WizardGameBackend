@@ -28,11 +28,11 @@ export class AuthController {
   @Get('refresh')
   refreshTokens(@Req() req: Request) {
     const userId = (req.user as Express.User)['sub'] as number;
-    console.log(req);
+    console.log(userId);
     const refresToken = req.headers.authorization
       ?.split('Bearer')[1]
       .trim() as string;
-    console.log(refresToken);
+
     return this.authServise.refreshTokens(+userId, refresToken);
   }
 }
