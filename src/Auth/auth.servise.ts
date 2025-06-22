@@ -31,16 +31,23 @@ export class AuthServise {
     if (userIsExist) throw new BadRequestException('User already exist');
 
     const newUser = await this.userServise.createUser(createUserDto);
+
     const tokens = this.getTokens(newUser.id, newUser.username);
+    await this.userServise.addRefreshToken(
+      (await tokens).refreshToken,
+      newUser.id,
+    );
     return tokens;
   }
 
   async refreshTokens(userId: number, refreshToken: string) {
     const user = await this.userServise.findById(userId);
+
     if (!user || !user.refreshToken)
       throw new ForbiddenException('Access Denied');
     const refreshTokenMatches =
       refreshToken === user.refreshToken ? true : false;
+
     if (!refreshTokenMatches) throw new ForbiddenException('Access Denied');
     const tokens = await this.getTokens(user.id, user.username);
     return tokens;

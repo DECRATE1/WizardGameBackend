@@ -2,14 +2,12 @@ import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
 import { AuthServise } from './auth.servise';
 
 import { CreateUserDto } from './auth.dto';
-import { AccessTokenGuard } from './guards/accessToken.guard';
 import { RefreshTokenGuard } from './guards/refreshToken.guard';
 import { Request } from 'express';
 @Controller('auth')
 export class AuthController {
   constructor(private authServise: AuthServise) {}
 
-  @UseGuards(AccessTokenGuard)
   @Post('signin')
   async signIn(@Body() userData: { username: string; password: string }) {
     return this.authServise.signIn({
@@ -30,7 +28,11 @@ export class AuthController {
   @Get('refresh')
   refreshTokens(@Req() req: Request) {
     const userId = (req.user as Express.User)['sub'] as number;
-    const refresToken = (req.user as Express.User)['refreshToken'] as string;
+    console.log(req);
+    const refresToken = req.headers.authorization
+      ?.split('Bearer')[1]
+      .trim() as string;
+    console.log(refresToken);
     return this.authServise.refreshTokens(+userId, refresToken);
   }
 }

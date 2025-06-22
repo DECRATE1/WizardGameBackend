@@ -1,5 +1,6 @@
-import { Body, Controller, Get, Param, Post, Request } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
 import { UserServise } from './user.servise';
+import { AccessTokenGuard } from 'src/Auth/guards/accessToken.guard';
 
 @Controller('user')
 export class UserController {
@@ -10,8 +11,15 @@ export class UserController {
     return this.userServise.createUser(userData);
   }
 
-  @Get('get')
+  @Get('getById')
   async getUserById(@Param('id') id: number) {
     return this.userServise.findById(id);
+  }
+
+  @UseGuards(AccessTokenGuard)
+  @Get('getByUsername')
+  async getUserByUserName(@Param('username') username: string) {
+    console.log(username);
+    return this.userServise.findUserByUserName(username);
   }
 }

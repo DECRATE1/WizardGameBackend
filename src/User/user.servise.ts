@@ -15,6 +15,10 @@ export class UserServise {
   }
 
   async findUserByUserName(username: string) {
-    return this.prisma.user.findUnique({ where: { username } });
+    return this.prisma.user.findFirst({ where: { username } });
+  }
+
+  async addRefreshToken(refreshToken: string, id: number) {
+    return this.prisma.user.update({ where: { id }, data: { refreshToken } });
   }
 }
