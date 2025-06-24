@@ -17,9 +17,8 @@ export class UserController {
   }
 
   @UseGuards(AccessTokenGuard)
-  @Get('getByUsername')
+  @Get('getByUsername/:username')
   async getUserByUserName(@Param('username') username: string) {
-    console.log(username);
     return this.userServise.findUserByUserName(username);
   }
 }
