@@ -1,7 +1,5 @@
 import {
-  MessageBody,
   OnGatewayConnection,
-  OnGatewayDisconnect,
   OnGatewayInit,
   SubscribeMessage,
   WebSocketGateway,
@@ -11,9 +9,7 @@ import { Server, Socket } from 'socket.io';
 import { LobbyServise } from './lobby.service';
 
 @WebSocketGateway(8080, { namespace: '/lobby', cors: { origin: '*' } })
-export class LobbyGateway
-  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
-{
+export class LobbyGateway implements OnGatewayInit, OnGatewayConnection {
   constructor(private lobbyServise: LobbyServise) {}
   @WebSocketServer() server: Server;
 
@@ -21,25 +17,44 @@ export class LobbyGateway
     console.log(`server is init`);
   }
 
-  async handleConnection(client: Socket) {
+  handleConnection(client: Socket) {
     console.log(`client connected: ${client.id}`);
-    this.server.send((await this.server.fetchSockets()).length);
+    console.log(client.data);
   }
 
   handleDisconnect(client: Socket) {
-    console.log(`client is disconnected: ${client.id}`);
+    console.log(`client disconnected: ${client.id}`);
   }
 
-  @SubscribeMessage('connect')
+  @SubscribeMessage('dis')
+  async handleCustomDisconnect(
+    client: Socket,
+    data: { userid: number; lobbyid: number },
+  ) {
+    await this.lobbyServise.removePlayerFromLobby(+data.userid);
+    const numberofPlayers = await this.lobbyServise.getNumberOfPlayersInLobby(
+      +data.lobbyid,
+    );
+    console.log(numberofPlayers);
+    this.server
+      .to(data.lobbyid.toString())
+      .emit('NumberOfPlayers', numberofPlayers.length);
+  }
+
+  @SubscribeMessage('connectLobby')
   async handleConnectionToLobby(
-    @MessageBody() data: { userid: number; lobbyid: number },
-  ): Promise<void> {
-    await this.lobbyServise.addPlayerToLobby(data.userid, data.lobbyid);
-    this.server.emit('drawPlayer');
-  }
+    client: Socket,
+    data: { userid: number; lobbyid: number; client: Socket },
+  ) {
+    const lobbyId = data.lobbyid.toString();
+    await client.join(lobbyId);
+    this.server
+      .to(lobbyId)
+      .emit(
+        'NumberOfPlayers',
+        (await this.server.in(lobbyId).fetchSockets()).length,
+      );
 
-  @SubscribeMessage('disconnect')
-  async handleDisconnectionFromLobby(@MessageBody() data: { userid: number }) {
-    await this.lobbyServise.removePlayerFromLobby(data.userid);
+    await this.lobbyServise.addPlayerToLobby(+data.userid, +data.lobbyid);
   }
 }

@@ -24,13 +24,17 @@ export class LobbyServise {
     return this.prisma.lobby.delete({ where: { id } });
   }
 
-  addPlayerToLobby(userid: number, lobbyid: number) {
-    return this.prisma.lobby_User.create({
+  async addPlayerToLobby(userid: number, lobbyid: number) {
+    return await this.prisma.lobbyuser.create({
       data: { userid, lobbyid },
     });
   }
 
   removePlayerFromLobby(userid: number) {
-    return this.prisma.lobby_User.deleteMany({ where: { userid } });
+    return this.prisma.lobbyuser.deleteMany({ where: { userid } });
+  }
+
+  getNumberOfPlayersInLobby(lobbyid: number) {
+    return this.prisma.lobbyuser.findMany({ where: { lobbyid } });
   }
 }

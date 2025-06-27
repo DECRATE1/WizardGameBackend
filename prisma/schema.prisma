@@ -13,25 +13,24 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-
 model User {
-  id Int @default(autoincrement()) @id
-  username String @unique()
-  password String
+  id           Int         @id @default(autoincrement())
+  username     String      @unique()
+  password     String
   refreshToken String?
-  Lobby_User Lobby_User[]
+  lobbyuser    lobbyuser[]
 }
 
 model Lobby {
-  id Int @default(autoincrement()) @id
+  id         Int         @id @default(autoincrement())
   lobbytitle String
-  Lobby_User Lobby_User[]
+  lobbyuser  lobbyuser[]
 }
 
-model Lobby_User{
-  lobbyuserid Int @id @default(autoincrement())
-  lobby Lobby @relation(fields: [lobbyid], references: [id])
-  lobbyid Int
-  user User @relation(fields: [userid], references: [id])
-  userid Int
+model lobbyuser {
+  lobbyuserid Int   @id @default(autoincrement())
+  lobby       Lobby @relation(fields: [lobbyid], references: [id])
+  lobbyid     Int  
+  user        User  @relation(fields: [userid], references: [id])
+  userid      Int  @unique
 }
