@@ -19,7 +19,6 @@ export class LobbyGateway implements OnGatewayInit, OnGatewayConnection {
 
   handleConnection(client: Socket) {
     console.log(`client connected: ${client.id}`);
-    console.log(client.data);
   }
 
   handleDisconnect(client: Socket) {
@@ -35,10 +34,21 @@ export class LobbyGateway implements OnGatewayInit, OnGatewayConnection {
     const numberofPlayers = await this.lobbyServise.getNumberOfPlayersInLobby(
       +data.lobbyid,
     );
-    console.log(numberofPlayers);
+
     this.server
       .to(data.lobbyid.toString())
       .emit('NumberOfPlayers', numberofPlayers.length);
+  }
+
+  @SubscribeMessage('ready')
+  async handleTest(client: Socket, data: { userid: number; lobbyid: number }) {
+    const clientReadyState = await this.lobbyServise.updateReadyState(
+      +data.userid,
+    );
+
+    this.server
+      .to(data.lobbyid.toString())
+      .emit('readyState', { state: clientReadyState[0].playerisReady });
   }
 
   @SubscribeMessage('connectLobby')

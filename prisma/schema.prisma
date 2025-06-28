@@ -33,4 +33,5 @@ model lobbyuser {
   lobbyid     Int  
   user        User  @relation(fields: [userid], references: [id])
   userid      Int  @unique
+  playerisReady Boolean @default(false)
 }

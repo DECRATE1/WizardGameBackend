@@ -37,4 +37,19 @@ export class LobbyServise {
   getNumberOfPlayersInLobby(lobbyid: number) {
     return this.prisma.lobbyuser.findMany({ where: { lobbyid } });
   }
+
+  async updateReadyState(userid: number) {
+    const readyState = await this.prisma.lobbyuser
+      .findFirst({
+        where: { userid },
+        select: { playerisReady: true },
+      })
+      .then((state) => state?.playerisReady);
+
+    return this.prisma.lobbyuser.updateManyAndReturn({
+      where: { userid },
+      data: { playerisReady: { set: !readyState } },
+      select: { playerisReady: true },
+    });
+  }
 }
