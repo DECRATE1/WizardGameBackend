@@ -28,16 +28,22 @@ export class LobbyGateway implements OnGatewayInit, OnGatewayConnection {
   @SubscribeMessage('dis')
   async handleCustomDisconnect(
     client: Socket,
-    data: { userid: number; lobbyid: number },
+    data: { userid: number; lobbyid: number; removeElement: string },
   ) {
     await this.lobbyServise.removePlayerFromLobby(+data.userid);
-    const numberofPlayers = await this.lobbyServise.getNumberOfPlayersInLobby(
-      +data.lobbyid,
-    );
-
-    this.server
-      .to(data.lobbyid.toString())
-      .emit('NumberOfPlayers', numberofPlayers.length);
+    client.disconnect();
+    await this.server
+      .in(data.lobbyid.toString())
+      .fetchSockets()
+      .then((socket: any) => {
+        this.server.to(data.lobbyid.toString()).emit('NumberOfPlayers', {
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+          numberOfConnections: socket.length,
+          removeElement: data.removeElement,
+          // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-call, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-return
+          socketids: socket.map((client) => client.id),
+        });
+      });
   }
 
   @SubscribeMessage('ready')
@@ -46,9 +52,10 @@ export class LobbyGateway implements OnGatewayInit, OnGatewayConnection {
       +data.userid,
     );
 
-    this.server
-      .to(data.lobbyid.toString())
-      .emit('readyState', { state: clientReadyState[0].playerisReady });
+    this.server.to(data.lobbyid.toString()).emit('readyState', {
+      state: clientReadyState[0].playerisReady,
+      sockeid: client.id,
+    });
   }
 
   @SubscribeMessage('connectLobby')
@@ -58,12 +65,12 @@ export class LobbyGateway implements OnGatewayInit, OnGatewayConnection {
   ) {
     const lobbyId = data.lobbyid.toString();
     await client.join(lobbyId);
-    this.server
-      .to(lobbyId)
-      .emit(
-        'NumberOfPlayers',
-        (await this.server.in(lobbyId).fetchSockets()).length,
-      );
+    const sockets = await this.server.in(lobbyId).fetchSockets();
+
+    this.server.to(lobbyId).emit('NumberOfPlayers', {
+      numberOfConnections: sockets.length,
+      socketids: sockets.map((socket) => socket.id),
+    });
 
     await this.lobbyServise.addPlayerToLobby(+data.userid, +data.lobbyid);
   }
