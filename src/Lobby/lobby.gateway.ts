@@ -46,8 +46,25 @@ export class LobbyGateway implements OnGatewayInit, OnGatewayConnection {
       });
   }
 
+  @SubscribeMessage('everyoneIsReady')
+  async handleEveryOneIsReady(client: Socket, data: { lobbyid: number }) {
+    const lobbyid = +data.lobbyid;
+    const players = await this.lobbyServise.getPlayers(lobbyid);
+    let everyoneIsReady = true;
+    players.forEach((player) =>
+      player.playerisReady ? '' : (everyoneIsReady = false),
+    );
+    this.server.to(lobbyid.toString()).emit('everyoneIsReady', {
+      everyoneIsReady,
+      numberofPlayers: players.length,
+    });
+  }
+
   @SubscribeMessage('ready')
-  async handleTest(client: Socket, data: { userid: number; lobbyid: number }) {
+  async handleReadyState(
+    client: Socket,
+    data: { userid: number; lobbyid: number },
+  ) {
     const clientReadyState = await this.lobbyServise.updateReadyState(
       +data.userid,
     );
@@ -64,14 +81,16 @@ export class LobbyGateway implements OnGatewayInit, OnGatewayConnection {
     data: { userid: number; lobbyid: number; client: Socket },
   ) {
     const lobbyId = data.lobbyid.toString();
+
     await client.join(lobbyId);
+    await this.lobbyServise.addPlayerToLobby(+data.userid, +data.lobbyid);
+    const players = await this.lobbyServise.getPlayers(+lobbyId);
     const sockets = await this.server.in(lobbyId).fetchSockets();
 
     this.server.to(lobbyId).emit('NumberOfPlayers', {
       numberOfConnections: sockets.length,
       socketids: sockets.map((socket) => socket.id),
+      players,
     });
-
-    await this.lobbyServise.addPlayerToLobby(+data.userid, +data.lobbyid);
   }
 }

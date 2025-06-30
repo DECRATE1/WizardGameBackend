@@ -34,7 +34,7 @@ export class LobbyServise {
     return this.prisma.lobbyuser.deleteMany({ where: { userid } });
   }
 
-  getNumberOfPlayersInLobby(lobbyid: number) {
+  getPlayers(lobbyid: number) {
     return this.prisma.lobbyuser.findMany({ where: { lobbyid } });
   }
 
