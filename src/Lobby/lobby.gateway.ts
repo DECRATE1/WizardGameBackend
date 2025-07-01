@@ -93,4 +93,19 @@ export class LobbyGateway implements OnGatewayInit, OnGatewayConnection {
       players,
     });
   }
+
+  @SubscribeMessage('startAGame')
+  async handleStartGame(client: Socket, data: { lobbyid: number }) {
+    const { lobbyid } = data;
+    const players = await this.lobbyServise.getPlayers(+lobbyid);
+    this.server.to(lobbyid.toString()).emit('startAGame', { players });
+  }
+
+  @SubscribeMessage('castSpell')
+  handleCastSpell(client: Socket, data: { spellid: string; lobbyid: number }) {
+    const { spellid, lobbyid } = data;
+    this.server
+      .to(lobbyid.toString())
+      .emit('castSpell', { spellid, clientid: client.id });
+  }
 }
