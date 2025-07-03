@@ -78,14 +78,15 @@ export class LobbyGateway implements OnGatewayInit, OnGatewayConnection {
   @SubscribeMessage('connectLobby')
   async handleConnectionToLobby(
     client: Socket,
-    data: { userid: number; lobbyid: number; client: Socket },
+    data: { userid: number; lobbyid: number },
   ) {
     const lobbyId = data.lobbyid.toString();
 
     await client.join(lobbyId);
-    await this.lobbyServise.addPlayerToLobby(+data.userid, +data.lobbyid);
-    const players = await this.lobbyServise.getPlayers(+lobbyId);
     const sockets = await this.server.in(lobbyId).fetchSockets();
+    const side = sockets.length < 2 ? 'left' : 'right';
+    await this.lobbyServise.addPlayerToLobby(+data.userid, +data.lobbyid, side);
+    const players = await this.lobbyServise.getPlayers(+lobbyId);
 
     this.server.to(lobbyId).emit('NumberOfPlayers', {
       numberOfConnections: sockets.length,
@@ -98,7 +99,9 @@ export class LobbyGateway implements OnGatewayInit, OnGatewayConnection {
   async handleStartGame(client: Socket, data: { lobbyid: number }) {
     const { lobbyid } = data;
     const players = await this.lobbyServise.getPlayers(+lobbyid);
-    this.server.to(lobbyid.toString()).emit('startAGame', { players });
+    this.server
+      .to(lobbyid.toString())
+      .emit('startAGame', { players, socketid: client.id });
   }
 
   @SubscribeMessage('castSpell')

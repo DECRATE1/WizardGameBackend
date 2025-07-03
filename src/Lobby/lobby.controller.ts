@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
 import { LobbyServise } from './lobby.service';
 import { AccessTokenGuard } from 'src/Auth/guards/accessToken.guard';
 import { LobbyDto } from './lobby.dto';
@@ -17,5 +17,10 @@ export class LobbyController {
   @Get('getLobbys')
   async getLobbys() {
     return await this.lobbyServise.getLobbys();
+  }
+
+  @Get('getSide/:userid')
+  async getSide(@Param('userid') userid: number) {
+    return await this.lobbyServise.getSide(+userid);
   }
 }

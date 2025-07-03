@@ -24,9 +24,21 @@ export class LobbyServise {
     return this.prisma.lobby.delete({ where: { id } });
   }
 
-  async addPlayerToLobby(userid: number, lobbyid: number) {
+  async addPlayerToLobby(
+    userid: number,
+    lobbyid: number,
+    side: 'left' | 'right',
+  ) {
     return await this.prisma.lobbyuser.create({
-      data: { userid, lobbyid },
+      data: { userid, lobbyid, sessionSide: side },
+    });
+  }
+
+  async getSide(userid: number) {
+    console.log(userid);
+    return await this.prisma.lobbyuser.findUnique({
+      where: { userid },
+      select: { sessionSide: true },
     });
   }
 
