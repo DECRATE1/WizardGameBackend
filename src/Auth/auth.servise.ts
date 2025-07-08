@@ -62,7 +62,7 @@ export class AuthServise {
         },
         {
           secret: process.env.SUPER_SECRET_KEY,
-          expiresIn: '15m',
+          expiresIn: '60m',
         },
       ),
       this.jwtServise.signAsync(
